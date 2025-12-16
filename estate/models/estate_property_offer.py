@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 class EstatePropertyOffer(models.Model):
     _name = "estate.property.offer"
     _description = "Estate Property Offer"
+    _order = "price desc"
 
     price = fields.Float()
     status = fields.Selection(selection=[('accepted','Accepted'),('refused','Refused')], copy=False)
@@ -29,15 +30,24 @@ class EstatePropertyOffer(models.Model):
 
     def accept_property(self):
         for record in self:
+            if record.property_id.offer_ids.filtered(lambda x: x.status == "accepted"):
+                raise UserError("An offer has already been accepted for this property!")
             record.status = 'accepted'
             record.property_id.write({
                 "buyer_id" : record.partner_id.id,
-                "selling_price" : record.price,                      
+                "selling_price" : record.price,
+                "state": "offer_accepted"                      
               })
     
     def refuse_property(self):
         for record in self:
             if record.status == 'accepted':
-                raise UserError("Accepted properties cannot be rejected")
+                raise UserError("Accepted properties cannot be refused!")
             else:
                 record.status = 'refused'
+
+
+    _check_offer_price = models.Constraint(
+        'CHECK(price > 0)',
+        'The offer price must be strictly positive',
+    )

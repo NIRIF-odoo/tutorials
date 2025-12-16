@@ -10,6 +10,7 @@
         <field name="model">estate.property</field>
         <field name="arch" type="xml">
             <list>
+                <field name="sequence" widget="handle"/>
                 <field name="name"/>
                 <field name="postcode"/>
                 <field name="bedrooms"/>
@@ -28,18 +29,18 @@
             <form>
                 <sheet>
                     <header>
-                        <button name ="sell_property" type="object" string="Sold"/>
-                        <button name ="cancel_property" type="object" string="Cancel"/>
+                        <button name ="sell_property" type="object" string="Sold" invisible="state in ('sold','cancelled')"/>
+                        <button name ="cancel_property" type="object" string="Cancel" invisible="state in ('sold','cancelled')"/>
+                        <field name="state" widget="statusbar" statusbar_visible="new,offer_received,offer_accepted,sold"/>
                     </header>
                     <h1>
                         <field name="name"/>
                     </h1>
 
-                    <field name="tag_ids" widget="many2many_tags"/>
+                    <field name="tag_ids" widget="many2many_tags" options="{'color_field':'color'}"/>
                     <group>
                         <group>
-                            <field name="state"/>
-                            <field name="property_type_id"/>
+                            <field name="property_type_id" options="{'no_create':true}"/>
                             <field name="postcode"/>
                             <field name="date_availability"/>
                         </group>
@@ -58,13 +59,13 @@
                                 <field name="facades"/>
                                 <field name="has_garage"/>
                                 <field name="has_garden"/>
-                                <field name="garden_area"/>
-                                <field name="garden_orientation"/>
+                                <field name="garden_area" invisible="not has_garden"/>
+                                <field name="garden_orientation" invisible="not has_garden"/>
                                 <field name="total_area"/>
                             </group>
                         </page>
                         <page string="Offers">
-                            <field name="offer_ids"/>
+                            <field name="offer_ids" readonly="state in ('offer_accepted','sold','cancelled')"/>
                         </page>
                         <page string="Other Info">
                             <group>
