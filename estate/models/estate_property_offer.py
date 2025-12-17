@@ -13,6 +13,7 @@ class EstatePropertyOffer(models.Model):
     property_id = fields.Many2one('estate.property',required=True)
     validity = fields.Integer(default=7)
     date_deadline = fields.Date(compute="_compute_date_deadline", inverse="_inverse_date_deadline")
+    property_type_id = fields.Many2one("estate.property.type",related="property_id.property_type_id", store=True)
 
 
 
@@ -36,7 +37,7 @@ class EstatePropertyOffer(models.Model):
             record.property_id.write({
                 "buyer_id" : record.partner_id.id,
                 "selling_price" : record.price,
-                "state": "offer_accepted"                      
+                "state":"offer_accepted",
               })
     
     def refuse_property(self):
@@ -51,3 +52,26 @@ class EstatePropertyOffer(models.Model):
         'CHECK(price > 0)',
         'The offer price must be strictly positive',
     )
+
+
+    @api.model
+    def create(self, vals_list):
+        for vals in vals_list:
+            property_id = vals.get('property_id')
+            if not property_id:
+                continue
+
+            property_rec = self.env['estate.property'].browse(property_id)
+
+            offer_price = vals.get('price')
+            if offer_price and property_rec.offer_ids:
+                max_offer = max(property_rec.offer_ids.mapped('price'))
+                if offer_price < max_offer:
+                    raise UserError(
+                        "You cannot create an offer lower than an existing offer."
+                    )
+
+            if property_rec.state == 'new':
+                property_rec.state = 'offer_received'
+
+        return super().create(vals_list)

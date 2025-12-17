@@ -30,7 +30,7 @@ class EstateProperty(models.Model):
     )
     property_type_id = fields.Many2one('estate.property.type', string='Property Type')
     buyer_id = fields.Many2one('res.partner',copy=False)
-    sales_person = fields.Many2one('res.users', string='Salesman', default=lambda self: self.env.user)
+    sales_person_id = fields.Many2one('res.users', string='Salesman', default=lambda self: self.env.user)
     tag_ids = fields.Many2many("estate.property.tag")
     offer_ids = fields.One2many("estate.property.offer","property_id")
     total_area = fields.Integer(compute="_compute_total_area")
@@ -51,9 +51,9 @@ class EstateProperty(models.Model):
         for record in self:
             if record.offer_ids:
                 record.best_price = max(record.offer_ids.mapped("price"))
-                record.state = "offer_received"
             else:
                 record.best_price = 0.0
+            
 
     @api.onchange("has_garden")
     def _onchange_garden(self):
@@ -96,3 +96,10 @@ class EstateProperty(models.Model):
         for record in self:
             if float_compare(record.selling_price,0.9*record.expected_price,precision_digits=2) < 0 and not float_is_zero(record.selling_price,precision_digits=2):
                 raise ValidationError("Selling price cannot be less than 90% of the expected price")
+            
+    
+    @api.ondelete(at_uninstall = False)
+    def _check_delete(self):
+        for record in self:
+            if record.state not in ('new','cancelled'):
+                raise UserError("You can only delete properties in New or Cancelled state")
