@@ -23,6 +23,7 @@
                 <field name="living_area"/>
                 <field name="expected_price"/>
                 <field name="selling_price"/>
+                <field name="best_price"/>
                 <field name="date_availability" optional="hide"/>
             </list>
         </field>
@@ -81,6 +82,7 @@
                         </page>
                     </notebook>
                 </sheet>
+                <chatter/>
             </form>
         </field>   
     </record>
